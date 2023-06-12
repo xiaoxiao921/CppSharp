@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 
 namespace CppSharp.Runtime
@@ -9,7 +10,7 @@ namespace CppSharp.Runtime
     {
         public Delegate[][] Methods { get; set; }
         public IntPtr[] Tables { get; set; }
-        private ConcurrentDictionary<(short, short, int), Delegate> Specializations;
+        private ConcurrentDictionary<string, Delegate> Specializations;
 
         public VTables(IntPtr[] tables, Delegate[][] methods = null)
         {
@@ -35,9 +36,12 @@ namespace CppSharp.Runtime
             else
             {
                 if (Specializations == null)
-                    Specializations = new ConcurrentDictionary<(short, short, int), Delegate>();
+                    Specializations = new ConcurrentDictionary<string, Delegate>();
 
-                var key = (specialiation, table, slot);
+                string key =
+                    specialiation.ToString(CultureInfo.InvariantCulture) +
+                    table.ToString(CultureInfo.InvariantCulture) +
+                    slot.ToString(CultureInfo.InvariantCulture);
 
                 if (!Specializations.TryGetValue(key, out var method))
                     Specializations[key] = method = MarshalUtil.GetDelegate<T>(Tables, table, slot);
